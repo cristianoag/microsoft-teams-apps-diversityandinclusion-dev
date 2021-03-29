@@ -1,0 +1,59 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.5/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.5",
+  "version": "1.0.0",
+  "id": "0c7397fc-9062-4eed-a16b-d8da7c330b8a",
+  "packageName": "com.microsoft.teams.diconnect.comms",
+  "developer": {
+    "name": "Contoso Electronics",
+    "websiteUrl": "https://www.contoso.com",
+    "privacyUrl": "https://www.contoso.com/privacy",
+    "termsOfUseUrl": "https://www.contoso.com/terms"
+  },
+  "localizationInfo": {
+    "defaultLanguageTag": "en"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "name": {
+    "short": "Diversity and Inclusion(Comms)",
+    "full": "Diversity and Inclusion (Comms)"
+  },
+  "description": {
+    "short": "A tool for communication and settings management for Diversity and Inclusion app",
+    "full": "Your organization's diversity and inclusion leadership team can create and send communications to multiple teams or a large number of individual employees over Teams chat. Manage settings for the Diversity and Inclusion app and oversee existing and new employee groups as needed"
+  },
+  "accentColor": "#737373",
+  "configurableTabs": [
+    {
+      "configurationUrl": "https://m365x257948-di.azurewebsites.net/configtab",
+      "canUpdateConfiguration": true,
+      "scopes": [
+        "team"
+      ]
+    }
+  ],
+  "bots": [
+    {
+      "botId": "7848b2e9-0488-4aa1-b15e-b73b4c851cc6",
+      "scopes": [
+        "team"
+      ],
+      "supportsFiles": true,
+      "isNotificationOnly": false
+    }
+  ],
+  "permissions": [
+    "identity",
+    "messageTeamMembers"
+  ],
+  "validDomains": [
+    "m365x257948-di.azurewebsites.net"
+  ],
+  "webApplicationInfo": {
+    "id": "7848b2e9-0488-4aa1-b15e-b73b4c851cc6",
+    "resource": "api://m365x257948-di.azurewebsites.net"
+  }
+}
