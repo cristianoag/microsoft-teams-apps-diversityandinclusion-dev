@@ -114,7 +114,7 @@ namespace Microsoft.Teams.Apps.DIConnect.Controllers
             var containsHiddenMembership = await this.groupsService.ContainsHiddenMembershipAsync(notification.Groups);
             if (containsHiddenMembership)
             {
-                return this.Forbid();
+                 return this.Forbid();
             }
 
             if (!notification.Validate(this.localizer, out string errorMessage))
@@ -136,7 +136,8 @@ namespace Microsoft.Teams.Apps.DIConnect.Controllers
                 CreatedBy = this.HttpContext.User?.Identity?.Name,
                 CreatedDate = DateTime.UtcNow,
                 IsDraft = true,
-                IsScheduled = false,
+                IsScheduled = notification.IsScheduled,
+                ScheduledDate = notification.ScheduledDate,
                 Teams = notification.Teams,
                 Rosters = notification.Rosters,
                 Groups = notification.Groups,
@@ -215,6 +216,7 @@ namespace Microsoft.Teams.Apps.DIConnect.Controllers
                 result.Add(summary);
             }
 
+            result.Sort((r1, r2) => r1.ScheduledDate.Value.CompareTo(r2.ScheduledDate.Value));
             return result;
         }
 
@@ -250,6 +252,8 @@ namespace Microsoft.Teams.Apps.DIConnect.Controllers
                 Rosters = notificationEntity.Rosters,
                 Groups = notificationEntity.Groups,
                 AllUsers = notificationEntity.AllUsers,
+                IsScheduled = notificationEntity.IsScheduled,
+                ScheduledDate = notificationEntity.ScheduledDate,
             };
 
             return this.Ok(result);

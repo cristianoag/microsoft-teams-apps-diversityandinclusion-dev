@@ -9,7 +9,7 @@ import { withTranslation, WithTranslation } from "react-i18next";
 import { initializeIcons } from 'office-ui-fabric-react';
 import { Loader, List, Flex, Text } from '@fluentui/react-northstar';
 import * as microsoftTeams from "@microsoft/teams-js";
-import { selectMessage, getScheduledMessagesList, getMessagesList } from '../../actions';
+import { selectMessage, getScheduledMessagesList, getDraftMessagesList, getMessagesList } from '../../actions';
 import { getBaseUrl } from '../../configVariables';
 import Overflow from '../OverFlow/scheduledMessageOverflow';
 import { TFunction } from "i18next";
@@ -38,6 +38,7 @@ export interface IMessageProps extends WithTranslation {
     messages: IMessage[];
     selectedMessage: any;
     selectMessage?: any;
+    getDraftMessagesList?: any;
     getScheduledMessagesList?: any;
     getMessagesList?: any;
 }
@@ -190,8 +191,9 @@ class ScheduledMessages extends React.Component<IMessageProps, IMessageState> {
 
             let submitHandler = (err: any, result: any) => {
                 this.props.getScheduledMessagesList().then(() => {
-                    this.props.getMessagesList();
-                    this.isOpenTaskModuleAllowed = true;
+                        this.props.getDraftMessagesList();
+                        this.props.getMessagesList();
+                        this.isOpenTaskModuleAllowed = true;
                 });
             };
 
@@ -205,4 +207,4 @@ const mapStateToProps = (state: any) => {
 }
 
 const ScheduledMessagesWithTranslation = withTranslation()(ScheduledMessages);
-export default connect(mapStateToProps, { selectMessage, getScheduledMessagesList, getMessagesList })(ScheduledMessagesWithTranslation);
+export default connect(mapStateToProps, { selectMessage, getScheduledMessagesList, getDraftMessagesList, getMessagesList })(ScheduledMessagesWithTranslation);

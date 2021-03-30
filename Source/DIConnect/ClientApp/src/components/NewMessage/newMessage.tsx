@@ -11,7 +11,7 @@ import { initializeIcons } from 'office-ui-fabric-react';
 import * as AdaptiveCards from "adaptivecards";
 import { Button, Loader, Dropdown, Text, Flex, FlexItem, ChevronStartIcon, Checkbox, Datepicker } from '@fluentui/react-northstar';
 import * as microsoftTeams from "@microsoft/teams-js";
-
+import { formatDate } from '../../i18n';
 import './newMessage.scss';
 import './teamTheme.scss';
 import { getDraftNotification, getTeams, createDraftNotification, updateDraftNotification, searchGroups, getGroups, verifyGroupAccess } from '../../apis/messageListApi';
@@ -52,6 +52,8 @@ export interface IDraftMessage {
     rosters: any[],
     groups: any[],
     allUsers: boolean
+    isScheduled: boolean
+    ScheduledDate: Date
 }
 
 export interface formState {
@@ -87,6 +89,11 @@ export interface formState {
     selectedGroups: dropdownItem[],
     errorImageUrlMessage: string,
     errorButtonUrlMessage: string,
+    scheduledDate: string,
+    DMY: Date,
+    DMYHour: string,
+    DMYMins: string,
+    futuredate: boolean
 }
 
 export interface INewMessageProps extends RouteComponentProps, WithTranslation {
@@ -104,7 +111,8 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
         this.localize = this.props.t;
         this.card = getInitAdaptiveCard(this.localize);
         this.setDefaultCard(this.card);
-
+        var TempDate = new Date();
+        TempDate.setHours(24, 0, 0, 0);
         this.state = {
             title: "",
             summary: "",
@@ -135,6 +143,11 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
             selectedGroups: [],
             errorImageUrlMessage: "",
             errorButtonUrlMessage: "",
+            scheduledDate: TempDate.toUTCString(),
+            DMY: TempDate,
+            DMYHour: "00",
+            DMYMins: "00",
+            futuredate: false
         }
 
         this.history = props.history;
@@ -160,6 +173,10 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                         selectedTeams: selectedTeams,
                         selectedRosters: selectedRosters,
                         selectedSchedule: this.state.selectedSchedule,
+                        scheduledDate: this.state.scheduledDate,
+                        DMY: this.getDateObject(this.state.scheduledDate),
+                        DMYHour: this.getDateHour(this.state.scheduledDate),
+                        DMYMins: this.getDateMins(this.state.scheduledDate)
                     })
                 });
                 this.getGroupData(id).then(() => {
@@ -298,6 +315,7 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
             else if (draftMessageDetail.allUsers) {
                 selectedRadioButton = "allUsers";
             }
+
             this.setState({
                 teamsOptionSelected: draftMessageDetail.teams.length > 0,
                 selectedTeamsNum: draftMessageDetail.teams.length,
@@ -306,12 +324,12 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                 groupsOptionSelected: draftMessageDetail.groups.length > 0,
                 selectedGroupsNum: draftMessageDetail.groups.length,
                 selectedRadioBtn: selectedRadioButton,
-                selectedSchedule: draftMessageDetail.selectedSchedule,
+                selectedSchedule: draftMessageDetail.isScheduled,
                 selectedTeams: draftMessageDetail.teams,
                 selectedRosters: draftMessageDetail.rosters,
-                selectedGroups: draftMessageDetail.groups
+                selectedGroups: draftMessageDetail.groups,
+                scheduledDate: draftMessageDetail.scheduledDate
             });
-
             setCardTitle(this.card, draftMessageDetail.title);
             setCardImageLink(this.card, draftMessageDetail.imageLink);
             setCardSummary(this.card, draftMessageDetail.summary);
@@ -477,15 +495,20 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
 
                                 <Checkbox
                                     className="ScheduleCheckbox"
+                                    labelPosition="start"
                                     onClick={this.onScheduleSelected}
                                     label={this.localize("ScheduledSend")}
                                     checked={this.state.selectedSchedule}
                                     toggle
                                 />
 
-                                <Flex gap="gap.smaller" className="ScheduleCheckbox">
+                                <Flex gap="gap.smaller" className="DateTimeSelector">
                                     <Datepicker
                                         disabled={!this.state.selectedSchedule}
+                                        defaultSelectedDate={this.getDateObject(this.state.scheduledDate)}
+                                        minDate={new Date()}
+                                        inputOnly
+                                        onDateChange={this.handleDateChange}
                                     />
                                     <FlexItem shrink={true} size="1%">
                                         <Dropdown
@@ -493,6 +516,8 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                                             disabled={!this.state.selectedSchedule}
                                             fluid={true}
                                             items={hours}
+                                            defaultValue={this.getDateHour(this.state.scheduledDate)}
+                                            onChange={this.handleHourChange}
                                         />
                                     </FlexItem>
                                     <FlexItem shrink={true} size="1%">
@@ -501,10 +526,17 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                                             disabled={!this.state.selectedSchedule}
                                             fluid={true}
                                             items={minutes}
+                                            defaultValue={this.getDateMins(this.state.scheduledDate)}
+                                            onChange={this.handleMinsChange}
                                         />
                                     </FlexItem>
+                                    
                                 </Flex>
-
+                                <div className={this.state.futuredate && this.state.selectedSchedule ? "ErrorMessage" : "hide"}>
+                                    <div className="noteText">
+                                        <Text error content={this.localize('FutureDateError')} />
+                                    </div>
+                                </div>
                             </div>
                             <div className="adaptiveCardContainer">
                             </div>
@@ -514,8 +546,23 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                             <Flex space="between">
                                 <Button icon={<ChevronStartIcon xSpacing="before" />} content={this.localize("Back")} text onClick={this.onBack} />
                                 <Flex className="buttonContainer">
-                                    <Button content={this.localize("SaveAsDraft")} disabled={this.isBtnDisabled() || this.state.disableButton} id="saveBtn" onClick={this.onSave} secondary />
-                                    <Button content={this.localize("PublishButtonText")} disabled={this.isBtnDisabled() || this.state.disableButton} id="saveBtn" onClick={() => this.onPublish()} primary />
+                                    <Button
+                                        content="Schedule"
+                                        disabled={!this.state.selectedSchedule || this.state.disableButton}
+                                        onClick={this.onSchedule}
+                                        primary={this.state.selectedSchedule} />
+                                    <Button
+                                        content={this.localize("SaveAsDraft")}
+                                        disabled={this.isBtnDisabled() || this.state.disableButton || this.state.selectedSchedule}
+                                        id="saveBtn"
+                                        onClick={this.onSave}
+                                        secondary />
+                                    <Button
+                                        content={this.localize("PublishButtonText")}
+                                        disabled={this.isBtnDisabled() || this.state.disableButton || this.state.selectedSchedule}
+                                        id="saveBtn"
+                                        onClick={() => this.onPublish()}
+                                        primary={!this.state.selectedSchedule} />
                                 </Flex>
                             </Flex>
                         </div>
@@ -525,6 +572,58 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                 return (<div>Error</div>);
             }
         }
+    }
+
+    private getDateObject = (datestring: string) => {
+        var TempDate = new Date();
+        TempDate.setHours(24, 0, 0, 0);
+        if (!datestring) return TempDate;
+        return new Date(datestring);
+    }
+
+    private getDateHour = (datestring: string) => {
+        if (!datestring) return "00";
+        var thour = new Date(datestring).getHours().toString();
+        return thour.padStart(2, "0");
+    }
+
+    private getDateMins = (datestring: string) => {
+        if (!datestring) return "00";
+        var tmins = new Date(datestring).getMinutes().toString();
+        return tmins.padStart(2,"0");
+    }
+
+    //handles click on DatePicker to change the schedule date
+    private handleDateChange = (e: any, v: any) => {
+        var TempDate = this.state.DMY;
+        TempDate.setMinutes(parseInt(this.state.DMYMins));
+        TempDate.setHours(parseInt(this.state.DMYHour));
+        this.setState({
+            scheduledDate: TempDate.toUTCString(),
+            DMY: v.value,
+        });
+    }
+
+    //handles selection on the hour combo
+    private handleHourChange = (e: any, v: any) => {
+        var TempDate = this.state.DMY;
+        TempDate.setHours(parseInt(v.value));
+        TempDate.setMinutes(parseInt(this.state.DMYMins));
+        this.setState({
+            scheduledDate: TempDate.toUTCString(),
+            DMYHour: v.value,
+        });
+    }
+
+    //handles selction on the minute combo
+    private handleMinsChange = (e: any, v: any) => {
+        var TempDate = this.state.DMY;
+        TempDate.setHours(parseInt(this.state.DMYHour));
+        TempDate.setMinutes(parseInt(v.value));
+        this.setState({
+            scheduledDate: TempDate.toUTCString(),
+            DMYMins: v.value,
+        });
     }
 
     private onGroupSelected = (value: any) => {
@@ -543,11 +642,15 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
         });
     }
 
+    //handler for the Schedule Send checkbox
     private onScheduleSelected = () => {
+        var TempDate = new Date();
+        TempDate.setHours(24, 0, 0, 0);
+
         this.setState({
             selectedSchedule: !this.state.selectedSchedule,
+            scheduledDate: TempDate.toUTCString()
         });
-        //alert("Valor do selectedSchedule = " + this.state.selectedSchedule);
     }
 
     private isBtnDisabled = () => {
@@ -701,7 +804,9 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
             teams: selectedTeams,
             rosters: selctedRosters,
             groups: selectedGroups,
-            allUsers: this.state.allUsersOptionSelected
+            allUsers: this.state.allUsersOptionSelected,
+            isScheduled: false,
+            ScheduledDate: new Date(this.state.scheduledDate)
         };
 
         let messageId;
@@ -713,6 +818,18 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
         }
 
         this.history.push('/sendconfirmation/' + messageId);
+    }
+
+    private onSchedule = () => {
+        var Today = new Date();
+        var Scheduled = new Date(this.state.scheduledDate);
+
+        if (Scheduled.getTime() > Today.getTime() + 1800000) { this.onSave() }
+        else {
+            this.setState({
+                futuredate: true
+            })
+        }
     }
 
     private onSave = () => {
@@ -735,9 +852,11 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
             teams: selectedTeams,
             rosters: selctedRosters,
             groups: selectedGroups,
-            allUsers: this.state.allUsersOptionSelected
-        };
+            allUsers: this.state.allUsersOptionSelected,
+            isScheduled: this.state.selectedSchedule,
+            ScheduledDate: new Date(this.state.scheduledDate)
 
+        };
         if (this.state.exists) {
             this.editDraftMessage(draftMessage).then(() => {
                 microsoftTeams.tasks.submitTask();

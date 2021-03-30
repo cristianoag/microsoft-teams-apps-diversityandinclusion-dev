@@ -9,7 +9,7 @@ import { withTranslation, WithTranslation } from "react-i18next";
 import { initializeIcons } from 'office-ui-fabric-react';
 import { Loader, List, Flex, Text } from '@fluentui/react-northstar';
 import * as microsoftTeams from "@microsoft/teams-js";
-import { selectMessage, getDraftMessagesList, getMessagesList } from '../../actions';
+import { selectMessage, getDraftMessagesList, getScheduledMessagesList, getMessagesList } from '../../actions';
 import { getBaseUrl } from '../../configVariables';
 import Overflow from '../OverFlow/draftMessageOverflow';
 import { TFunction } from "i18next";
@@ -35,11 +35,12 @@ export interface IMessage {
 }
 
 export interface IMessageProps extends WithTranslation {
-  messages: IMessage[];
-  selectedMessage: any;
-  selectMessage?: any;
-  getDraftMessagesList?: any;
-  getMessagesList?: any;
+    messages: IMessage[];
+    selectedMessage: any;
+    selectMessage?: any;
+    getDraftMessagesList?: any;
+    getScheduledMessagesList?: any;
+    getMessagesList?: any;
 }
 
 export interface IMessageState {
@@ -169,9 +170,10 @@ class DraftMessages extends React.Component<IMessageProps, IMessageState> {
       }
 
       let submitHandler = (err: any, result: any) => {
-        this.props.getDraftMessagesList().then(() => {
-          this.props.getMessagesList();
-          this.isOpenTaskModuleAllowed = true;
+          this.props.getDraftMessagesList().then(() => {
+            this.props.getScheduledMessagesList();
+            this.props.getMessagesList();
+            this.isOpenTaskModuleAllowed = true;
         });
       };
 
@@ -185,4 +187,4 @@ const mapStateToProps = (state: any) => {
 }
 
 const draftMessagesWithTranslation = withTranslation()(DraftMessages);
-export default connect(mapStateToProps, { selectMessage, getDraftMessagesList, getMessagesList })(draftMessagesWithTranslation);
+export default connect(mapStateToProps, { selectMessage, getDraftMessagesList, getScheduledMessagesList, getMessagesList })(draftMessagesWithTranslation);

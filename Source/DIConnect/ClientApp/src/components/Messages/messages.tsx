@@ -193,17 +193,17 @@ class Messages extends React.Component<IMessageProps, IMessageState> {
   private messageContent = (message: any) => {
     return (
       <Flex className="listContainer" vAlign="center" fill gap="gap.small">
-        <Flex.Item size="size.quarter" variables={{ 'size.quarter': '24%' }} grow={1}>
+        <Flex.Item grow={1}>
           <Text
             truncated
             content={message.title}
           >
           </Text>
         </Flex.Item>
-        <Flex.Item size="size.quarter" variables={{ 'size.quarter': '24%' }}>
+        <Flex.Item push size="24%" shrink={0}>
           {this.renderSendingText(message)}
         </Flex.Item>
-        <Flex.Item size="size.quarter" variables={{ 'size.quarter': '24%' }} shrink={false}>
+        <Flex.Item size="24%" shrink={0}>
             <div>
                 <TooltipHost content={this.props.t("TooltipSuccess")} calloutProps={{ gapSpace: 0 }}>
                     <AcceptIcon xSpacing="after" className="succeeded" outline  />
@@ -222,7 +222,7 @@ class Messages extends React.Component<IMessageProps, IMessageState> {
                     }
             </div>
         </Flex.Item>
-        <Flex.Item size="size.quarter" variables={{ 'size.quarter': '24%' }} >
+        <Flex.Item size="20%" shrink={0} >
           <Text
             truncated
             className="semiBold"

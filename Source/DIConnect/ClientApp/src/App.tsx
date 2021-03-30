@@ -114,8 +114,7 @@ class App extends React.Component<{}, IAppState> {
             baseFontSize: 10,
             style: this.state.themeStyle
         });
-        //scheduledsend
-        //new route pointing to the delaysendconfirmation component
+
         return (
             <TeamsThemeContext.Provider value={context}>
                 <Suspense fallback={<div></div>}>

@@ -73,7 +73,7 @@ class Overflow extends React.Component<OverflowProps, OverflowState> {
                     items: [
                         {
                             key: 'send',
-                            content: this.localize("Send"),
+                            content: this.localize("SendNow"),
                             onClick: (event: any) => {
                                 event.stopPropagation();
                                 this.setState({

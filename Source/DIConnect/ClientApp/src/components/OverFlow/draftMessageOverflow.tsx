@@ -84,20 +84,6 @@ class Overflow extends React.Component<OverflowProps, OverflowState> {
                             }
                         },
                         {
-                            //delaysend
-                            //Creates a new menu for drafts that allow delay send for a specific message
-                            key: 'delaysend',
-                            content: this.localize("ScheduledSend"),
-                            onClick: (event: any) => {
-                                event.stopPropagation();
-                                this.setState({
-                                    menuOpen: false,
-                                });
-                                let url = getBaseUrl() + "/scheduledsendconfirmation/" + this.props.message.id + "?locale={locale}";
-                                this.onOpenTaskModule(null, url, this.localize("ScheduledSendConfirmation"));
-                            }
-                        },
-                        {
                             key: 'preview',
                             content: this.localize("PreviewInThisChannel"),
                             onClick: (event: any) => {
