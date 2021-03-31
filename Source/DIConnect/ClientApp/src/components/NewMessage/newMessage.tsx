@@ -11,7 +11,7 @@ import { initializeIcons } from 'office-ui-fabric-react';
 import * as AdaptiveCards from "adaptivecards";
 import { Button, Loader, Dropdown, Text, Flex, FlexItem, ChevronStartIcon, Checkbox, Datepicker } from '@fluentui/react-northstar';
 import * as microsoftTeams from "@microsoft/teams-js";
-import { formatDate } from '../../i18n';
+import Resizer from 'react-image-file-resizer';
 import './newMessage.scss';
 import './teamTheme.scss';
 import { getDraftNotification, getTeams, createDraftNotification, updateDraftNotification, searchGroups, getGroups, verifyGroupAccess } from '../../apis/messageListApi';
@@ -94,6 +94,7 @@ export interface formState {
     DMYHour: string,
     DMYMins: string,
     futuredate: boolean
+    disableImageUrl: boolean
 }
 
 export interface INewMessageProps extends RouteComponentProps, WithTranslation {
@@ -104,6 +105,7 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
     readonly localize: TFunction;
     private card: any;
     history: any;
+    fileInput: any;
 
     constructor(props: INewMessageProps) {
         super(props);
@@ -147,9 +149,11 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
             DMY: TempDate,
             DMYHour: "00",
             DMYMins: "00",
-            futuredate: false
+            futuredate: false,
+            disableImageUrl: false
         }
-
+        this.fileInput = React.createRef();
+        this.handleImageSelection = this.handleImageSelection.bind(this);
         this.history = props.history;
     }
 
@@ -202,6 +206,44 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
             }
         });
     }
+
+    private _handleReaderLoaded = (readerEvt: any) => {
+        const binaryString = readerEvt.target.result;
+    }
+
+    //function to handle the selection of the OS file upload box
+    private handleImageSelection() {
+        //get the first file selected
+        const file = this.fileInput.current.files[0];
+        if (file) { //if we have a file
+            Resizer.imageFileResizer(file, 400, 400, 'JPEG', 80, 0,
+                uri => {
+                    if (uri.toString().length < 64000) {
+                        //everything is ok with the image, lets set it on the card and update
+                        setCardImageLink(this.card, uri.toString());
+                        this.updateCard();
+                        //lets set the state with the image value
+                        this.setState({
+                            imageLink: uri.toString()
+                        }, () => {
+                                this._handleReaderLoaded.bind(this);
+                        }
+                        );
+                    } else {
+                        //azure tables have a limitation of 64K, images larger than 64k cannot be used with the upload
+                        console.log("Image size too large.");
+                    }
+
+                },
+                'base64'); //we need the image in base64
+        }
+    }
+
+    
+    //Function calling a click event on a hidden file input
+    private handleUploadClick = (event: any) => {
+        this.fileInput.current.click();
+    };
 
     private makeDropdownItems = (items: any[] | undefined) => {
         const resultedTeams: dropdownItem[] = [];
@@ -380,16 +422,29 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                                     required
                                 />
 
+                                <Flex gap="gap.smaller" vAlign="end" >
                                 <Input
-                                    className="inputField"
-                                    value={this.state.imageLink}
-                                    label={this.localize("ImageURL")}
-                                    placeholder={this.localize("ImageURLPlaceHolder")}
-                                    onChange={this.onImageLinkChanged}
-                                    errorLabel={this.state.errorImageUrlMessage}
-                                    autoComplete="off"
+                                        className="inputField"
+                                        value={this.state.imageLink}
+                                        label={this.localize("ImageURL")}
+                                        placeholder={this.localize("ImageURLPlaceHolder")}
+                                        onChange={this.onImageLinkChanged}
+                                        errorLabel={this.state.errorImageUrlMessage}
+                                        autoComplete="off"
+                                        style={{ width: "100%" }}
                                 />
-
+                                <Flex.Item>
+                                <Button onClick={this.handleUploadClick}
+                                            text
+                                            size="smaller"
+                                            content={this.localize("UploadImage")}
+                                        />
+                                </Flex.Item>
+                                <input type="file" accept="image/"
+                                    style={{ display: 'none' }}
+                                        onChange={this.handleImageSelection}
+                                    ref={this.fileInput} />
+                                </Flex>
                                 <TextArea
                                     className="inputField textArea"
                                     autoFocus
@@ -949,7 +1004,7 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
         }, () => {
             if (showDefaultCard) {
                 this.setDefaultCard(this.card);
-            }
+                }
             this.updateCard();
         });
     }

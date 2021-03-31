@@ -15,6 +15,8 @@ import { getBaseUrl } from "../../configVariables";
 import Constants from "../../constants/constants";
 import { GroupType } from "../../constants/groupType";
 import './group.scss';
+import Resizer from 'react-image-file-resizer';
+
 
 interface IState {
     loading: boolean,
@@ -63,6 +65,7 @@ export interface ITagValidationParameters {
 class CreateNewGroup extends React.Component<WithTranslation, IState> {
     localize: TFunction;
     userObjectId: string = "";
+    fileInput: any;
 
     constructor(props: Readonly<WithTranslation>) {
         super(props);
@@ -102,6 +105,8 @@ class CreateNewGroup extends React.Component<WithTranslation, IState> {
             submitLoading: false,
             isGroupSubmittedSuccessfully: false,
         }
+        this.fileInput = React.createRef();
+        this.handleImageSelection = this.handleImageSelection.bind(this);
     }
 
     public componentDidMount() {
@@ -425,6 +430,43 @@ class CreateNewGroup extends React.Component<WithTranslation, IState> {
         }
     }
 
+    private _handleReaderLoaded = (readerEvt: any) => {
+        const binaryString = readerEvt.target.result;
+    }
+
+    //function to handle the selection of the OS file upload box
+    private handleImageSelection() {
+        //get the first file selected
+        const file = this.fileInput.current.files[0];
+        if (file) { //if we have a file
+            Resizer.imageFileResizer(file, 400, 400, 'JPEG', 80, 0,
+                uri => {
+                    if (uri.toString().length < 64000) {
+                        //everything is ok with the image, lets set it on the card and update
+                        //setCardImageLink(this.card, uri.toString());
+                        //this.updateCard();
+                        //lets set the state with the image value
+                        this.setState({
+                            imageLink: uri.toString()
+                        }, () => {
+                            this._handleReaderLoaded.bind(this);
+                        }
+                        );
+                    } else {
+                        //azure tables have a limitation of 64K, images larger than 64k cannot be used with the upload
+                        console.log("Image size too large.");
+                    }
+
+                },
+                'base64'); //we need the image in base64
+        }
+    }
+
+    //Function calling a click event on a hidden file input
+    private handleUploadClick = (event: any) => {
+        this.fileInput.current.click();
+    };
+
     /**
     *Sets image link state.
     *@param event object
@@ -610,6 +652,7 @@ class CreateNewGroup extends React.Component<WithTranslation, IState> {
                                 {this.getInvalidUrlError(this.state.isImageLinkValid)}
                             </Flex.Item>
                         </Flex>
+                        <Flex gap="gap.smaller" vAlign="end" >
                         <Input
                             className="between-space"
                             fluid
@@ -617,7 +660,19 @@ class CreateNewGroup extends React.Component<WithTranslation, IState> {
                             value={this.state.imageLink}
                             onChange={this.onImageLinkChange}
                             data-testid="image_url"
-                        />
+                            />
+                        <Flex.Item push>
+                        <Button onClick={this.handleUploadClick}
+                             text
+                             size="smaller" 
+                             content={this.localize("UploadImage")}
+                                />
+                        </Flex.Item>
+                        <input type="file" accept="image/"
+                             style={{ display: 'none' }}
+                             onChange={this.handleImageSelection}
+                             ref={this.fileInput} />
+                        </Flex>
                         <div>
                             <Flex className="top-padding">
                                 <Text data-testid="tags_field" size="small" content={this.localize("Tags")} />

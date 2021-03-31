@@ -1,4 +1,5 @@
 {
+  "UploadImage": "Upload",
   "DraftMessagesSectionTitle": "Draft communications",
   "SentMessagesSectionTitle": "Sent communications",
   "ScheduledMessagesSectionTitle": "Scheduled communications",
@@ -28,7 +29,7 @@
   "InstallingApp": "Installing app...",
   "SendingMessages": "Sending... {{SentCount}} of {{TotalCount}}",
   "ImageURL": "Image URL",
-  "ImageURLPlaceHolder": "Enter image link",
+  "ImageURLPlaceHolder": "Enter image link or click upload",
   "Summary": "Body of message",
   "SummaryPlaceHolder": "Type your message",
   "Author": "Message by",
@@ -37,7 +38,7 @@
   "ButtonTitle": "Button",
   "ButtonTitlePlaceHolder": "Type text to appear on button",
   "ButtonURL": "Button link",
-  "ButtonURLPlaceHolder": "Enter link",
+  "ButtonURLPlaceHolder": "Enter image link or click upload",
   "Next": "Next",
   "SendHeadingText": "Choose how you want to send your message",
   "SendToGeneralChannel": "Send to the General channel of specific teams",
