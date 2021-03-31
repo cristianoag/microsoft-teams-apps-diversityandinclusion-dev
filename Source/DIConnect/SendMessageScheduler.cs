@@ -53,7 +53,7 @@ namespace Microsoft.Teams.Apps.DIConnect
         {
             this.smslogger.LogInformation("[DIConnect Scheduler] Hosted Service is running.");
 
-            this.smstimer = new Timer(this.DoWork, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+            this.smstimer = new Timer(this.DoWork, null, TimeSpan.Zero, TimeSpan.FromMinutes(5));
 
             return Task.CompletedTask;
         }
