@@ -758,7 +758,6 @@ class UpdateResouceGroup extends React.Component<IUpdateGroupProps, IState> {
                             />
                             <Flex.Item push>
                                 <Button onClick={this.handleUploadClick}
-                                    text
                                     size="smaller"
                                     content={this.localize("UploadImage")}
                                 />

@@ -6,10 +6,10 @@
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 import { withTranslation, WithTranslation } from "react-i18next";
-import { Input, TextArea, Radiobutton, RadiobuttonGroup } from 'msteams-ui-components-react';
+import { TextArea, Radiobutton, RadiobuttonGroup } from 'msteams-ui-components-react';
 import { initializeIcons } from 'office-ui-fabric-react';
 import * as AdaptiveCards from "adaptivecards";
-import { Button, Loader, Dropdown, Text, Flex, FlexItem, ChevronStartIcon, Checkbox, Datepicker } from '@fluentui/react-northstar';
+import { Input, Button, Loader, Dropdown, Text, Flex, FlexItem, ChevronStartIcon, Checkbox, Datepicker } from '@fluentui/react-northstar';
 import * as microsoftTeams from "@microsoft/teams-js";
 import Resizer from 'react-image-file-resizer';
 import './newMessage.scss';
@@ -412,30 +412,28 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                     <div className="taskModule">
                         <div className="formContainer">
                             <div className="formContentContainer" >
+                                <Flex>
                                 <Input
                                     className="inputField"
                                     value={this.state.title}
                                     label={this.localize("TitleText")}
                                     placeholder={this.localize("PlaceHolderTitle")}
                                     onChange={this.onTitleChanged}
-                                    autoComplete="off"
                                     required
-                                />
-
-                                <Flex gap="gap.smaller" vAlign="end" >
+                                    fluid
+                                    />
+                                    </Flex>
+                                <Flex gap="gap.smaller" vAlign="end" className="inputField">
                                 <Input
-                                        className="inputField"
                                         value={this.state.imageLink}
                                         label={this.localize("ImageURL")}
                                         placeholder={this.localize("ImageURLPlaceHolder")}
                                         onChange={this.onImageLinkChanged}
-                                        errorLabel={this.state.errorImageUrlMessage}
-                                        autoComplete="off"
-                                        style={{ width: "100%" }}
+                                        error={this.state.errorImageUrlMessage !== ""}
+                                        fluid
                                 />
-                                <Flex.Item>
+                                <Flex.Item push>
                                 <Button onClick={this.handleUploadClick}
-                                            text
                                             size="smaller"
                                             content={this.localize("UploadImage")}
                                         />
@@ -453,24 +451,28 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                                     value={this.state.summary}
                                     onChange={this.onSummaryChanged}
                                 />
-
+                                <Flex>
                                 <Input
                                     className="inputField"
                                     value={this.state.author}
                                     label={this.localize("Author")}
                                     placeholder={this.localize("AuthorPlaceHolder")}
-                                    onChange={this.onAuthorChanged}
-                                    autoComplete="off"
+                                        onChange={this.onAuthorChanged}
+                                        fluid
                                 />
+                                </Flex>
+                                <Flex>
 
                                 <Input
                                     className="inputField"
                                     value={this.state.btnTitle}
                                     label={this.localize("ButtonTitle")}
                                     placeholder={this.localize("ButtonTitlePlaceHolder")}
-                                    onChange={this.onBtnTitleChanged}
-                                    autoComplete="off"
+                                        onChange={this.onBtnTitleChanged}
+                                        fluid
                                 />
+                                    </Flex>
+                                <Flex>
 
                                 <Input
                                     className="inputField"
@@ -478,9 +480,11 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                                     label={this.localize("ButtonURL")}
                                     placeholder={this.localize("ButtonURLPlaceHolder")}
                                     onChange={this.onBtnLinkChanged}
-                                    errorLabel={this.state.errorButtonUrlMessage}
-                                    autoComplete="off"
-                                />
+                                        error={this.state.errorButtonUrlMessage !== ""}
+                                        fluid
+                                    />
+                                    </Flex>
+
                             </div>
                             <div className="adaptiveCardContainer">
                             </div>
