@@ -30,6 +30,8 @@ const hours = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10",
 const minutes = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55",
 ];
 
+const coeff = 1000 * 60 * 5;
+
 type dropdownItem = {
     key: string,
     header: string,
@@ -51,8 +53,8 @@ export interface IDraftMessage {
     teams: any[],
     rosters: any[],
     groups: any[],
-    allUsers: boolean
-    isScheduled: boolean
+    allUsers: boolean,
+    isScheduled: boolean,
     ScheduledDate: Date
 }
 
@@ -113,8 +115,8 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
         this.localize = this.props.t;
         this.card = getInitAdaptiveCard(this.localize);
         this.setDefaultCard(this.card);
-        var TempDate = new Date();
-        TempDate.setHours(24, 0, 0, 0);
+        var TempDate = this.getRoundedDate(5, this.getDateObject()); //get the current date
+
         this.state = {
             title: "",
             summary: "",
@@ -145,10 +147,10 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
             selectedGroups: [],
             errorImageUrlMessage: "",
             errorButtonUrlMessage: "",
-            scheduledDate: TempDate.toUTCString(),
-            DMY: TempDate,
-            DMYHour: "00",
-            DMYMins: "00",
+            scheduledDate: TempDate.toUTCString(), //current date in UTC string format
+            DMY: TempDate, //current date in date format
+            DMYHour: this.getDateHour(TempDate.toUTCString()), //initialize with the current hour (rounded up)
+            DMYMins: this.getDateMins(TempDate.toUTCString()), //initialize with the current minute (rounded up)
             futuredate: false,
             disableImageUrl: false
         }
@@ -218,7 +220,7 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
         if (file) { //if we have a file
             Resizer.imageFileResizer(file, 400, 400, 'JPEG', 80, 0,
                 uri => {
-                    if (uri.toString().length < 64000) {
+                    if (uri.toString().length < 32768) {
                         //everything is ok with the image, lets set it on the card and update
                         setCardImageLink(this.card, uri.toString());
                         this.updateCard();
@@ -230,10 +232,11 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                         }
                         );
                     } else {
-                        //azure tables have a limitation of 64K, images larger than 64k cannot be used with the upload
-                        console.log("Image size too large.");
+                        //images bigger than 32K cannot be saved, set the error message to be presented
+                        this.setState({
+                            errorImageUrlMessage: this.localize("ErrorImageTooBig")
+                        });
                     }
-
                 },
                 'base64'); //we need the image in base64
         }
@@ -242,6 +245,12 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
     
     //Function calling a click event on a hidden file input
     private handleUploadClick = (event: any) => {
+        //reset the error message and the image link as the upload will reset them potentially
+        this.setState({
+            errorImageUrlMessage: "",
+            imageLink: ""
+        });
+        //fire the fileinput click event and run the handleimageselection function
         this.fileInput.current.click();
     };
 
@@ -443,6 +452,8 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                                         onChange={this.handleImageSelection}
                                     ref={this.fileInput} />
                                 </Flex>
+                                <Text className={(this.state.errorImageUrlMessage === "") ? "hide" : "inputField"} error size="small" content={this.state.errorImageUrlMessage} />
+
                                 <TextArea
                                     className="inputField textArea"
                                     autoFocus
@@ -633,11 +644,23 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
         }
     }
 
-    private getDateObject = (datestring: string) => {
-        var TempDate = new Date();
-        TempDate.setHours(24, 0, 0, 0);
-        if (!datestring) return TempDate;
-        return new Date(datestring);
+    //get the next rounded up (ceil) date in minutes
+    private getRoundedDate = (minutes: number, d = new Date()) => {
+
+        let ms = 1000 * 60 * minutes; // convert minutes to ms
+        let roundedDate = new Date(Math.ceil(d.getTime() / ms) * ms);
+
+        return roundedDate
+    }
+
+    //get date object based on the string parameter
+    private getDateObject = (datestring?: string) => {
+        if (!datestring) {
+            var TempDate = new Date(); //get current date
+            TempDate.setTime(TempDate.getTime() + 86400000);
+            return TempDate; //if date string is not provided, then return tomorrow rounded up next 5 minutes
+        }
+        return new Date(datestring); //if date string is provided, return current date object
     }
 
     private getDateHour = (datestring: string) => {
@@ -654,33 +677,35 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
 
     //handles click on DatePicker to change the schedule date
     private handleDateChange = (e: any, v: any) => {
-        var TempDate = this.state.DMY;
-        TempDate.setMinutes(parseInt(this.state.DMYMins));
-        TempDate.setHours(parseInt(this.state.DMYHour));
+        var TempDate = v.value; //set the tempdate var with the value selected by the user
+        TempDate.setMinutes(parseInt(this.state.DMYMins)); //set the minutes selected on minutes drop down 
+        TempDate.setHours(parseInt(this.state.DMYHour)); //set the hour selected on hour drop down
+        //set the state variables
         this.setState({
-            scheduledDate: TempDate.toUTCString(),
-            DMY: v.value,
+            scheduledDate: TempDate.toUTCString(), //updates the state string representation
+            DMY: TempDate, //updates the date on the state
         });
     }
 
     //handles selection on the hour combo
     private handleHourChange = (e: any, v: any) => {
-        var TempDate = this.state.DMY;
-        TempDate.setHours(parseInt(v.value));
-        TempDate.setMinutes(parseInt(this.state.DMYMins));
+        var TempDate = this.state.DMY; //get the tempdate from the state
+        TempDate.setHours(parseInt(v.value)); //set hour with the value select on the hour drop down
+        //set state variables
         this.setState({
-            scheduledDate: TempDate.toUTCString(),
-            DMYHour: v.value,
+            scheduledDate: TempDate.toUTCString(), //updates the string representation 
+            DMY: TempDate, //updates DMY
+            DMYHour: v.value, //set the new hour value on the state
         });
     }
 
     //handles selction on the minute combo
     private handleMinsChange = (e: any, v: any) => {
         var TempDate = this.state.DMY;
-        TempDate.setHours(parseInt(this.state.DMYHour));
         TempDate.setMinutes(parseInt(v.value));
         this.setState({
             scheduledDate: TempDate.toUTCString(),
+            DMY: TempDate,
             DMYMins: v.value,
         });
     }
@@ -703,12 +728,12 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
 
     //handler for the Schedule Send checkbox
     private onScheduleSelected = () => {
-        var TempDate = new Date();
-        TempDate.setHours(24, 0, 0, 0);
-
+        var TempDate = this.getRoundedDate(5, this.getDateObject()); //get the next day date rounded to the nearest hour/minute
+        //set the state
         this.setState({
             selectedSchedule: !this.state.selectedSchedule,
-            scheduledDate: TempDate.toUTCString()
+            scheduledDate: TempDate.toUTCString(),
+            DMY: TempDate
         });
     }
 

@@ -121,6 +121,7 @@ class TabContainer extends React.Component<ITaskInfoProps, ITabContainerState> {
 
         let submitHandler = (err: any, result: any) => {
             this.props.getDraftMessagesList();
+            this.props.getScheduledMessagesList();
         };
 
         microsoftTeams.tasks.startTask(taskInfo, submitHandler);

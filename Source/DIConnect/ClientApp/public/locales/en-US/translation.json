@@ -168,5 +168,6 @@
   "UpdateButtonText": "Update",
   "EveryWeek": "Weekly",
   "EveryMonth": "Monthly",
-  "ProfileMatchingInfo": "Allow the app to match you with people to meet in this employee group."
+  "ProfileMatchingInfo": "Allow the app to match you with people to meet in this employee group.",
+  "ErrorImageTooBig": "The image is too big!"
 }

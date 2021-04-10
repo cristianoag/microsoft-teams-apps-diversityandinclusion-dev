@@ -46,6 +46,7 @@ interface IState {
     isLocationPresent: boolean;
     isTeamLinkValid: boolean;
     isImageLinkValid: boolean;
+    isImageSizeOk: boolean;
     isExternalSelected: boolean;
     isTeamsSelected: boolean;
     errorMessage: string;
@@ -96,6 +97,7 @@ class CreateNewGroup extends React.Component<WithTranslation, IState> {
             isTeamDescriptionPresent: true,
             isTeamLinkPresent: true,
             isImageLinkPresent: true,
+            isImageSizeOk: true,
             isLocationPresent: true,
             isTeamLinkValid: true,
             isImageLinkValid: true,
@@ -441,7 +443,7 @@ class CreateNewGroup extends React.Component<WithTranslation, IState> {
         if (file) { //if we have a file
             Resizer.imageFileResizer(file, 400, 400, 'JPEG', 80, 0,
                 uri => {
-                    if (uri.toString().length < 64000) {
+                    if (uri.toString().length < 32768) {
                         //everything is ok with the image, lets set it on the card and update
                         //setCardImageLink(this.card, uri.toString());
                         //this.updateCard();
@@ -453,8 +455,10 @@ class CreateNewGroup extends React.Component<WithTranslation, IState> {
                         }
                         );
                     } else {
-                        //azure tables have a limitation of 64K, images larger than 64k cannot be used with the upload
-                        console.log("Image size too large.");
+                        //images bigger than 32K cannot be saved, set the error message to be presented
+                        this.setState({
+                            isImageSizeOk: false
+                        });
                     }
 
                 },
@@ -464,6 +468,10 @@ class CreateNewGroup extends React.Component<WithTranslation, IState> {
 
     //Function calling a click event on a hidden file input
     private handleUploadClick = (event: any) => {
+        this.setState({
+            isImageSizeOk: true,
+            imageLink: ""
+        });
         this.fileInput.current.click();
     };
 
@@ -520,6 +528,18 @@ class CreateNewGroup extends React.Component<WithTranslation, IState> {
     private getInvalidUrlError = (isValuePresent: boolean) => {
         if (!isValuePresent) {
             return (<Text data-testid="url_validation" content={this.localize('InvalidUrlMessage')} error size="small" />);
+        }
+
+        return (<></>);
+    }
+
+    /**
+   *Returns text component containing error message for image too big
+   *@param {boolean} isValuePresent Indicates whether value is present
+   */
+    private getImageTooBigError = (isValuePresent: boolean) => {
+        if (!isValuePresent) {
+            return (<Text data-testid="url_validation" content={this.localize('ErrorImageTooBig')} error size="small" />);
         }
 
         return (<></>);
@@ -651,6 +671,9 @@ class CreateNewGroup extends React.Component<WithTranslation, IState> {
                             <Flex.Item push>
                                 {this.getInvalidUrlError(this.state.isImageLinkValid)}
                             </Flex.Item>
+                            <Flex.Item push>
+                                {this.getImageTooBigError(this.state.isImageSizeOk)}
+                            </Flex.Item>
                         </Flex>
                         <Flex gap="gap.smaller" vAlign="end" >
                         <Input
@@ -672,6 +695,7 @@ class CreateNewGroup extends React.Component<WithTranslation, IState> {
                              onChange={this.handleImageSelection}
                              ref={this.fileInput} />
                         </Flex>
+
                         <div>
                             <Flex className="top-padding">
                                 <Text data-testid="tags_field" size="small" content={this.localize("Tags")} />

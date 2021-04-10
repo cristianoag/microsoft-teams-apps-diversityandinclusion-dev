@@ -43,11 +43,12 @@ namespace Microsoft.Teams.Apps.DIConnect.Repositories.Extensions
                 CreatedBy = userName,
                 CreatedDate = DateTime.UtcNow,
                 IsDraft = true,
-                IsScheduled = false,
+                IsScheduled = notification.IsScheduled,
                 Teams = notification.Teams,
                 Rosters = notification.Rosters,
                 Groups = notification.Groups,
                 AllUsers = notification.AllUsers,
+                ScheduledDate = notification.ScheduledDate,
             };
 
             await notificationRepository.CreateOrUpdateAsync(notificationEntity);
